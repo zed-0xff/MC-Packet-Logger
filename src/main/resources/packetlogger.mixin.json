@@ -6,7 +6,8 @@
 		"ClientConnectionAccessor",
 		"ClientConnectionMixin",
 		"CustomPayloadC2SPacketAccessor",
-		"CustomPayloadS2CPacketAccessor"
+		"CustomPayloadS2CPacketAccessor",
+		"PacketDecoderMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

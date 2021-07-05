@@ -7,6 +7,9 @@ import org.apache.logging.log4j.Logger;
 
 import io.github.haykam821.packetlogger.mixin.CustomPayloadC2SPacketAccessor;
 import io.github.haykam821.packetlogger.mixin.CustomPayloadS2CPacketAccessor;
+import io.netty.buffer.ByteBuf;
+
+import java.lang.reflect.Field;
 import net.minecraft.network.NetworkSide;
 import net.minecraft.network.Packet;
 import net.minecraft.util.Identifier;
@@ -32,25 +35,63 @@ public class PacketLogger {
 
 	public static void logSentPacket(Packet<?> packet, NetworkSide side) {
 		String sideName = PacketLogger.getSideName(side);
+                String data = "";
 
+                Field[] allFields = packet.getClass().getDeclaredFields();
+                for (Field field : allFields) {
+                    field.setAccessible(true);
+                    try {
+                        data += "f: " + field.getName() + "; d: " + field.get(packet) + " / ";
+                    }catch(IllegalAccessException ex) {
+                        data += "f: " + field.getName() + "; exception";
+                    }
+                }
+                
 		Identifier channel = PacketLogger.getChannel(packet);
 		if (channel != null) {
-			LOGGER.info("Sending packet with channel '{}' ({})", channel, sideName);
+			LOGGER.info("Sending packet with channel '{}' ({}) / data {}", channel, sideName, data);
 			return;
 		}
 
-		LOGGER.info("Sending packet with name '{}' ({})", packet.getClass().getName(), sideName);
+		LOGGER.info("Sending packet with name '{}' ({}) / data {}", packet.getClass().getName(), sideName, data);
 	}
 
 	public static void logReceivedPacket(Packet<?> packet, NetworkSide side) {
 		String sideName = PacketLogger.getSideName(side);
+		String data = "";
+		
+                Field[] allFields = packet.getClass().getDeclaredFields();
+                for (Field field : allFields) {
+                    field.setAccessible(true);
+                    try {
+                        data += "f: " + field.getName() + "; d: " + field.get(packet) + " / ";
+                    }catch(IllegalAccessException ex) {
+                        data += "f: " + field.getName() + "; exception";
+                    }
+                }
 
 		Identifier channel = PacketLogger.getChannel(packet);
 		if (channel != null) {
-			LOGGER.info("Received packet with channel '{}' ({})", channel, sideName);
+			LOGGER.info("Received packet with channel '{}' ({}) / data {}", channel, sideName, data);
 			return;
 		}
 
-		LOGGER.info("Received packet with name '{}' ({})", packet.getClass().getName(), sideName);
+		LOGGER.info("Received packet with name '{}' ({}) / data {}", packet.getClass().getName(), sideName, data);
+	}
+
+	public static void logReceivedPacket(ByteBuf buffer) {
+		StringBuilder data = new StringBuilder();
+		buffer.markReaderIndex();
+		char[] hex = "0123456789ABCDEF".toCharArray();
+		
+		while(buffer.readableBytes() > 0) {
+			byte d = buffer.readByte();
+			data.append(hex[(d >> 4) & 0x0F]);
+			data.append(hex[(d) & 0x0F]);
+			data.append(" ");
+		}
+		buffer.resetReaderIndex();
+		
+		LOGGER.info("Received packet HEX: {}", data.toString());
 	}
 }
