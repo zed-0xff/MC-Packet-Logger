@@ -14,8 +14,20 @@ import net.minecraft.network.NetworkSide;
 import net.minecraft.network.Packet;
 import net.minecraft.util.Identifier;
 
-public class PacketLogger {
-	private static final Logger LOGGER = LogManager.getLogger("Packet Logger");
+import net.fabricmc.api.ModInitializer;
+
+import me.shedaniel.autoconfig.AutoConfig;
+import me.shedaniel.autoconfig.serializer.JanksonConfigSerializer;
+
+public class PacketLogger implements ModInitializer {
+	public static final String MOD_ID = "Packet Logger";
+	private static final Logger LOGGER = LogManager.getLogger(MOD_ID);
+    public static ModConfig CONFIG = null;
+
+    @Override
+	public void onInitialize() {
+		CONFIG = AutoConfig.register(ModConfig.class, JanksonConfigSerializer::new).getConfig();
+	}
 
 	private static Identifier getChannel(Packet<?> packet) {
 		if (packet instanceof CustomPayloadC2SPacketAccessor) {
@@ -34,6 +46,7 @@ public class PacketLogger {
 	}
 
 	public static void logSentPacket(Packet<?> packet, NetworkSide side) {
+        if ( CONFIG == null || !CONFIG.enabled ) return;
 		String sideName = PacketLogger.getSideName(side);
                 String data = "";
 
@@ -57,6 +70,7 @@ public class PacketLogger {
 	}
 
 	public static void logReceivedPacket(Packet<?> packet, NetworkSide side) {
+        if ( CONFIG == null || !CONFIG.enabled ) return;
 		String sideName = PacketLogger.getSideName(side);
 		String data = "";
 		
@@ -80,6 +94,7 @@ public class PacketLogger {
 	}
 
 	public static void logReceivedPacket(ByteBuf buffer) {
+        if ( CONFIG == null || !CONFIG.enabled ) return;
 		StringBuilder data = new StringBuilder();
 		buffer.markReaderIndex();
 		char[] hex = "0123456789ABCDEF".toCharArray();

@@ -16,6 +16,14 @@
 	],
 	"license": "MIT",
 	"icon": "assets/packetlogger/icon.png",
+  "entrypoints": {
+    "modmenu": [
+      "io.github.haykam821.packetlogger.PacketLoggerMenuApiImpl"
+    ],
+    "main": [
+      "io.github.haykam821.packetlogger.PacketLogger"
+    ]
+  },
 	"depends": {
 		"fabricloader": ">=0.4.0"
 	}
