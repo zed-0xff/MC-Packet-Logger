@@ -12,6 +12,7 @@ import io.netty.buffer.ByteBuf;
 import java.lang.reflect.Field;
 import net.minecraft.network.NetworkSide;
 import net.minecraft.network.Packet;
+import net.minecraft.util.ActionResult;
 import net.minecraft.util.Identifier;
 
 import net.fabricmc.api.ModInitializer;
@@ -41,6 +42,12 @@ public class PacketLogger implements ModInitializer {
     @Override
 	public void onInitialize() {
 		CONFIG = AutoConfig.register(ModConfig.class, JanksonConfigSerializer::new).getConfig();
+        AutoConfig.getConfigHolder(ModConfig.class).registerSaveListener((manager, data) -> {
+            if ( data.useMappings ) {
+                initMappings();
+            }
+            return ActionResult.SUCCESS;
+        });
         if ( CONFIG.useMappings ) {
             initMappings();
         }
@@ -65,17 +72,17 @@ public class PacketLogger implements ModInitializer {
 	public static void logSentPacket(Packet<?> packet, NetworkSide side) {
         if ( CONFIG == null || !CONFIG.logSent ) return;
 		String sideName = PacketLogger.getSideName(side);
-                String data = "";
+        String data = "";
 
-                Field[] allFields = packet.getClass().getDeclaredFields();
-                for (Field field : allFields) {
-                    field.setAccessible(true);
-                    try {
-                        data += "f: " + field.getName() + "; d: " + field.get(packet) + " / ";
-                    }catch(IllegalAccessException ex) {
-                        data += "f: " + field.getName() + "; exception";
-                    }
-                }
+        Field[] allFields = packet.getClass().getDeclaredFields();
+        for (Field field : allFields) {
+            field.setAccessible(true);
+            try {
+                data += "f: " + field.getName() + "; d: " + field.get(packet) + " / ";
+            }catch(IllegalAccessException ex) {
+                data += "f: " + field.getName() + "; exception";
+            }
+        }
                 
 		Identifier channel = PacketLogger.getChannel(packet);
 		if (channel != null) {
@@ -83,7 +90,10 @@ public class PacketLogger implements ModInitializer {
 			return;
 		}
 
-		LOGGER.info("SEND '{}' ({}) / data {}", unmap(packet.getClass().getName()), sideName, data);
+        String className = unmapOrIgnore(packet.getClass().getName());
+        if ( className == null )
+            return;
+		LOGGER.info("SEND '{}' ({}) / data {}", className, sideName, data);
 	}
 
 	public static void logReceivedPacket(Packet<?> packet, NetworkSide side) {
@@ -91,15 +101,15 @@ public class PacketLogger implements ModInitializer {
 		String sideName = PacketLogger.getSideName(side);
 		String data = "";
 		
-                Field[] allFields = packet.getClass().getDeclaredFields();
-                for (Field field : allFields) {
-                    field.setAccessible(true);
-                    try {
-                        data += "f: " + field.getName() + "; d: " + field.get(packet) + " / ";
-                    }catch(IllegalAccessException ex) {
-                        data += "f: " + field.getName() + "; exception";
-                    }
-                }
+        Field[] allFields = packet.getClass().getDeclaredFields();
+        for (Field field : allFields) {
+            field.setAccessible(true);
+            try {
+                data += "f: " + field.getName() + "; d: " + field.get(packet) + " / ";
+            }catch(IllegalAccessException ex) {
+                data += "f: " + field.getName() + "; exception";
+            }
+        }
 
 		Identifier channel = PacketLogger.getChannel(packet);
 		if (channel != null) {
@@ -107,7 +117,10 @@ public class PacketLogger implements ModInitializer {
 			return;
 		}
 
-		LOGGER.info("RECV '{}' ({}) / data {}", unmap(packet.getClass().getName()), sideName, data);
+        String className = unmapOrIgnore(packet.getClass().getName());
+        if ( className == null )
+            return;
+		LOGGER.info("RECV '{}' ({}) / data {}", className, sideName, data);
 	}
 
 	public static void logReceivedPacket(ByteBuf buffer) {
@@ -149,6 +162,15 @@ public class PacketLogger implements ModInitializer {
             LOGGER.error("Failed to read mappings: ", e);
         }
         return null;
+    }
+
+    private static String unmapOrIgnore(String src) {
+        String className = unmap(src);
+        for ( String suffix : CONFIG.ignores ) {
+            if ( className.endsWith(suffix) )
+                return null;
+        }
+        return className;
     }
 
     private static String unmap(String src) {
