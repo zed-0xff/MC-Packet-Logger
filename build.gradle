@@ -29,6 +29,9 @@ dependencies {
     include "me.shedaniel.cloth:cloth-config-fabric:${project.clothconfig_version}"
 
     modImplementation "com.terraformersmc:modmenu:${project.modmenu_version}"
+
+    implementation 'net.fabricmc:mapping-io:0.2.1'
+    include 'net.fabricmc:mapping-io:0.2.1'
 }
 
 processResources {
