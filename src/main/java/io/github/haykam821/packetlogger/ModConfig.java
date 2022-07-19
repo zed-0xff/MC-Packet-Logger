@@ -10,7 +10,9 @@ import me.shedaniel.cloth.clothconfig.shadowed.blue.endless.jankson.Comment;
 @Config(name = PacketLogger.MOD_ID)
 public class ModConfig implements ConfigData {
 
-    boolean enabled = false;
+    boolean logSent = false;
+    boolean logReceived = false;
+
     boolean logHex  = false;
     boolean useMappings = false;
     String  mapPath = "~/.gradle/caches/fabric-loom/1.19/net.fabricmc.yarn.1_19.1.19+build.4-v2/mappings.tiny";

@@ -63,7 +63,7 @@ public class PacketLogger implements ModInitializer {
 	}
 
 	public static void logSentPacket(Packet<?> packet, NetworkSide side) {
-        if ( CONFIG == null || !CONFIG.enabled ) return;
+        if ( CONFIG == null || !CONFIG.logSent ) return;
 		String sideName = PacketLogger.getSideName(side);
                 String data = "";
 
@@ -87,7 +87,7 @@ public class PacketLogger implements ModInitializer {
 	}
 
 	public static void logReceivedPacket(Packet<?> packet, NetworkSide side) {
-        if ( CONFIG == null || !CONFIG.enabled ) return;
+        if ( CONFIG == null || !CONFIG.logReceived ) return;
 		String sideName = PacketLogger.getSideName(side);
 		String data = "";
 		
@@ -111,7 +111,7 @@ public class PacketLogger implements ModInitializer {
 	}
 
 	public static void logReceivedPacket(ByteBuf buffer) {
-        if ( CONFIG == null || !CONFIG.enabled || !CONFIG.logHex ) return;
+        if ( CONFIG == null || !CONFIG.logReceived || !CONFIG.logHex ) return;
 		StringBuilder data = new StringBuilder();
 		buffer.markReaderIndex();
 		char[] hex = "0123456789ABCDEF".toCharArray();
