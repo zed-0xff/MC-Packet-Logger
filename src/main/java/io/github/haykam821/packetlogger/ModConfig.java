@@ -20,13 +20,22 @@ public class ModConfig implements ConfigData {
     boolean useMappings = false;
     String  mapPath = "~/.gradle/caches/fabric-loom/1.19/net.fabricmc.yarn.1_19.1.19+build.4-v2/mappings.tiny";
 
+    // high values likely to cause recursions and burn out your CPU ;)
+    // also bloated logs, especially on BlockUpdateS2CPacket with recursion >= 5
+    // one EntitySpawnS2CPacket with recursion level 5 => 500kb
+    @ConfigEntry.BoundedDiscrete(min=0, max=10)
+    int maxRecursion = 2;
+
     List<String> stripPrefixes = Arrays.asList(
         "net/minecraft/network/packet/s2c/play/",
         "net/minecraft/network/packet/c2s/play/"
         );
 
+    // feel free to unignore
     List<String> ignores = Arrays.asList(
             "BlockBreakingProgressS2CPacket",
+            "BlockUpdateS2CPacket",
+            "BossBarS2CPacket",
             "ChunkDataS2CPacket",
             "ChunkDeltaUpdateS2CPacket",
             "EntityAnimationS2CPacket",
@@ -56,5 +65,11 @@ public class ModConfig implements ConfigData {
             "ScoreboardPlayerUpdateS2CPacket",
             "TeamS2CPacket",
             "WorldTimeUpdateS2CPacket"
+            );
+
+    // they're just too big, again feel free to unskip
+    List<String> skipClasses = Arrays.asList(
+            "net/minecraft/client/resource/language/TranslationStorage",
+            "net/minecraft/util/registry/DefaultedRegistry"
             );
 }

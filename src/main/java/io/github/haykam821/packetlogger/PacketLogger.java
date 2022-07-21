@@ -2,7 +2,9 @@ package io.github.haykam821.packetlogger;
 
 import java.util.Arrays;
 import java.util.Locale;
+import java.util.List;
 import java.util.HashMap;
+import java.util.HashSet;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -11,6 +13,7 @@ import io.github.haykam821.packetlogger.mixin.CustomPayloadC2SPacketAccessor;
 import io.github.haykam821.packetlogger.mixin.CustomPayloadS2CPacketAccessor;
 import io.netty.buffer.ByteBuf;
 
+import java.lang.Enum;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import net.minecraft.network.NetworkSide;
@@ -51,6 +54,7 @@ public class PacketLogger implements ModInitializer {
     private static int nsI; // intermediary
     private static int nsN; // named
     private static HashMap<String, UnmapperProxy> unmappersCache = new HashMap<String, UnmapperProxy>();
+    private static HashSet<String> skipClasses = new HashSet<String>();
     public static final KeyBinding OPEN_CONFIG =
             new KeyBinding("keybinding.open-config", GLFW.GLFW_KEY_F10, "key.category.packet-logger");
     private static final KeyBinding TOGGLE_LOGGING =
@@ -66,11 +70,14 @@ public class PacketLogger implements ModInitializer {
             if ( data.useMappings ) {
                 initMappings();
             }
+            skipClasses = new HashSet<String>(CONFIG.skipClasses);
             return ActionResult.SUCCESS;
         });
         if ( CONFIG.useMappings ) {
             initMappings();
         }
+        skipClasses = new HashSet<String>(CONFIG.skipClasses);
+
         KeyBindingHelper.registerKeyBinding(TOGGLE_LOGGING);
         KeyBindingHelper.registerKeyBinding(OPEN_CONFIG);
         ClientTickEvents.END_CLIENT_TICK.register(PacketLogger::clientTick);
@@ -138,18 +145,48 @@ public class PacketLogger implements ModInitializer {
         return um.fieldName(field.getName());
     }
 
-    private static String objectToString(Object object) {
-        if ( object == null || object instanceof java.lang.Enum )
+    private static <T> String objectToString(List<T> list, int level) {
+        String r = "[";
+        boolean first = true;
+        for ( T value : list ) {
+            if ( first ) {
+                first = false;
+            } else {
+                r += ", ";
+            }
+            r += objectToString(value, level+1);
+        }
+        r += "]";
+        return r;
+    }
+
+    private static String objectToString(Enum object, int level) {
+         return String.valueOf(object);
+    }
+
+    private static <T> String objectToString(T object, int level) {
+        if ( object == null )
             return String.valueOf(object);
+
+        if ( level >= CONFIG.maxRecursion )
+            return String.valueOf(object);
+
+        if ( object instanceof Enum ) {
+            return objectToString((Enum)object, level);
+        }
+
+        if ( object instanceof List ) {
+            return objectToString((List)object, level); // same level
+        }
 
         UnmapperProxy um = getUnmapperProxy(object.getClass().getName());
         if ( !um.isMapped() )
             return object.toString();
 
-//        LOGGER.info("[d] " + object.getClass().getName() + " -> " + um.className());
-//
-//        if ( um != null )
-//            return object.toString();
+        String className = um.className();
+        if( skipClasses.contains(className) ){
+            return String.format("%s{ <SKIPPED> }", stripPrefixes(className));
+        }
 
         String data = "";
         boolean first = true;
@@ -160,17 +197,17 @@ public class PacketLogger implements ModInitializer {
                 if ( first ) first = false; else data += ", ";
                 field.setAccessible(true);
                 try {
-                    data += guessFieldName(field) + "=" + field.get(object);
+                    data += guessFieldName(field) + "=" + objectToString(field.get(object), level + 1);
                 }catch(IllegalAccessException ex) {
                     data += guessFieldName(field) + "=<exception!>";
                 }
             }
         } catch (java.lang.reflect.InaccessibleObjectException e) {
-            LOGGER.info("[?] InaccessibleObjectException: " + object.getClass().getName() + " -> " + um.className());
+            LOGGER.info("[?] InaccessibleObjectException: " + object.getClass().getName() + " -> " + className);
             return String.valueOf(object);
         }
 
-        return String.format("%s{ %s }", stripPrefixes(um.className()), data);
+        return String.format("%s{ %s }", stripPrefixes(className), data);
     }
 
     private static String packetToString(Packet<?> packet) {
@@ -187,7 +224,11 @@ public class PacketLogger implements ModInitializer {
             if ( first ) first = false; else data += ", ";
             field.setAccessible(true);
             try {
-                data += guessFieldName(field) + "=" + objectToString(field.get(packet));
+                if ( CONFIG.maxRecursion > 0 ) {
+                    data += guessFieldName(field) + "=" + objectToString(field.get(packet), 1);
+                } else {
+                    data += guessFieldName(field) + "=" + field.get(packet);
+                }
             }catch(IllegalAccessException ex) {
                 data += guessFieldName(field) + "=<exception!>";
             }
