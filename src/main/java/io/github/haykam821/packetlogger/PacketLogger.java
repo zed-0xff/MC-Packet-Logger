@@ -17,6 +17,8 @@ import net.minecraft.network.NetworkSide;
 import net.minecraft.network.Packet;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Identifier;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.option.KeyBinding;
 
 import net.fabricmc.api.ModInitializer;
 
@@ -28,11 +30,14 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.mappingio.MappingReader;
 import net.fabricmc.mappingio.tree.MappingTree;
 import net.fabricmc.mappingio.tree.MappingTree.ClassMapping;
 import net.fabricmc.mappingio.tree.MappingTree.FieldMapping;
 import net.fabricmc.mappingio.tree.MemoryMappingTree;
+import org.lwjgl.glfw.GLFW;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -46,6 +51,11 @@ public class PacketLogger implements ModInitializer {
     private static int nsI; // intermediary
     private static int nsN; // named
     private static HashMap<String, UnmapperProxy> unmappersCache = new HashMap<String, UnmapperProxy>();
+    public static final KeyBinding OPEN_CONFIG =
+            new KeyBinding("keybinding.open-config", GLFW.GLFW_KEY_F10, "key.category.packet-logger");
+    private static final KeyBinding TOGGLE_LOGGING =
+            new KeyBinding("keybinding.toggle-logging", GLFW.GLFW_KEY_F12, "key.category.packet-logger");
+    private static boolean masterSwitch = false;
 
     @Override
 	public void onInitialize() {
@@ -61,7 +71,20 @@ public class PacketLogger implements ModInitializer {
         if ( CONFIG.useMappings ) {
             initMappings();
         }
+        KeyBindingHelper.registerKeyBinding(TOGGLE_LOGGING);
+        KeyBindingHelper.registerKeyBinding(OPEN_CONFIG);
+        ClientTickEvents.END_CLIENT_TICK.register(PacketLogger::clientTick);
 	}
+
+    public static void clientTick(MinecraftClient mc) {
+        while (OPEN_CONFIG.wasPressed()) {
+            mc.setScreen(AutoConfig.getConfigScreen(ModConfig.class, mc.currentScreen).get());
+        }
+
+        while (TOGGLE_LOGGING.wasPressed()) {
+            masterSwitch = !masterSwitch;
+        }
+    }
 
 	private static Identifier getChannel(Packet<?> packet) {
 		if (packet instanceof CustomPayloadC2SPacketAccessor) {
@@ -174,7 +197,7 @@ public class PacketLogger implements ModInitializer {
     }
 
 	public static void logSentPacket(Packet<?> packet, NetworkSide side) {
-        if ( CONFIG == null || !CONFIG.logSent ) return;
+        if ( CONFIG == null || !masterSwitch || !CONFIG.logSent ) return;
 
         String data = packetToString(packet);
         if ( data == null ) return;
@@ -190,7 +213,7 @@ public class PacketLogger implements ModInitializer {
 	}
 
 	public static void logReceivedPacket(Packet<?> packet, NetworkSide side) {
-        if ( CONFIG == null || !CONFIG.logReceived ) return;
+        if ( CONFIG == null || !masterSwitch || !CONFIG.logReceived ) return;
 
         String data = packetToString(packet);
         if ( data == null ) return;
@@ -206,7 +229,7 @@ public class PacketLogger implements ModInitializer {
 	}
 
 	public static void logReceivedPacket(ByteBuf buffer) {
-        if ( CONFIG == null || !CONFIG.logReceived || !CONFIG.logHex ) return;
+        if ( CONFIG == null || !masterSwitch || !CONFIG.logReceived || !CONFIG.logHex ) return;
 		StringBuilder data = new StringBuilder();
 		buffer.markReaderIndex();
 		char[] hex = "0123456789ABCDEF".toCharArray();
