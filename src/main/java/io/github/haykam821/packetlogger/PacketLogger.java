@@ -20,6 +20,7 @@ import net.minecraft.network.NetworkSide;
 import net.minecraft.network.Packet;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Identifier;
+import net.minecraft.text.Text;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
 
@@ -90,6 +91,7 @@ public class PacketLogger implements ModInitializer {
 
         while (TOGGLE_LOGGING.wasPressed()) {
             masterSwitch = !masterSwitch;
+            mc.player.sendMessage(Text.literal("Packet logging is now " + (masterSwitch ? "ON" : "OFF")));
         }
     }
 
