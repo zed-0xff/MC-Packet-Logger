@@ -61,6 +61,7 @@ public class PacketLogger implements ModInitializer {
     private static final KeyBinding TOGGLE_LOGGING =
             new KeyBinding("keybinding.toggle-logging", GLFW.GLFW_KEY_F12, "key.category.packet-logger");
     private static boolean masterSwitch = false;
+    private static int tick = 0;
 
     @Override
 	public void onInitialize() {
@@ -85,6 +86,7 @@ public class PacketLogger implements ModInitializer {
 	}
 
     public static void clientTick(MinecraftClient mc) {
+        tick++;
         while (OPEN_CONFIG.wasPressed()) {
             mc.setScreen(AutoConfig.getConfigScreen(ModConfig.class, mc.currentScreen).get());
         }
@@ -239,6 +241,14 @@ public class PacketLogger implements ModInitializer {
         return String.format("%s{ %s }", stripPrefixes(um.className()), data);
     }
 
+    private static void logPacket(String dir, String data) {
+        if ( CONFIG.logTick ) {
+            LOGGER.info("[{}] {} {}", tick, dir, data);
+        } else {
+            LOGGER.info("{} {}", dir, data);
+        }
+    }
+
 	public static void logSentPacket(Packet<?> packet, NetworkSide side) {
         if ( CONFIG == null || !masterSwitch || !CONFIG.logSent ) return;
 
@@ -252,7 +262,7 @@ public class PacketLogger implements ModInitializer {
 			return;
 		}
 
-		LOGGER.info("{} SEND {}", sideName, data);
+        logPacket("SEND", data);
 	}
 
 	public static void logReceivedPacket(Packet<?> packet, NetworkSide side) {
@@ -268,7 +278,7 @@ public class PacketLogger implements ModInitializer {
 			return;
 		}
 
-		LOGGER.info("{} RECV {}", sideName, data);
+        logPacket("RECV", data);
 	}
 
 	public static void logReceivedPacket(ByteBuf buffer) {

@@ -15,10 +15,11 @@ public class ModConfig implements ConfigData {
 
     boolean logSent = false;
     boolean logReceived = false;
+    boolean logTick = false;
 
     boolean logHex  = false;
     boolean useMappings = false;
-    String  mapPath = "~/.gradle/caches/fabric-loom/1.19/net.fabricmc.yarn.1_19.1.19+build.4-v2/mappings.tiny";
+    String  mapPath = "~/.gradle/caches/fabric-loom/1.19.1/net.fabricmc.yarn.1_19_1.1.19.1+build.6-v2/mappings.tiny";
 
     // high values likely to cause recursions and burn out your CPU ;)
     // also bloated logs, especially on BlockUpdateS2CPacket with recursion >= 5
@@ -33,6 +34,7 @@ public class ModConfig implements ConfigData {
 
     // feel free to unignore
     List<String> ignores = Arrays.asList(
+//            "class_2827", // 1.19.1 PlayPongC2SPacket ?
             "BlockBreakingProgressS2CPacket",
             "BlockUpdateS2CPacket",
             "BossBarS2CPacket",
@@ -70,6 +72,10 @@ public class ModConfig implements ConfigData {
     // they're just too big, again feel free to unskip
     List<String> skipClasses = Arrays.asList(
             "net/minecraft/client/resource/language/TranslationStorage",
-            "net/minecraft/util/registry/DefaultedRegistry"
+            "net/minecraft/sound/BlockSoundGroup",
+            "net/minecraft/state/StateManager",
+            "net/minecraft/util/registry/DefaultedRegistry",
+            "net/minecraft/util/registry/RegistryEntry",
+            "net/minecraft/util/registry/RegistryEntry$Reference"
             );
 }
