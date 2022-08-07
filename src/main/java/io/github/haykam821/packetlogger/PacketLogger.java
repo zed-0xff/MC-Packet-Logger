@@ -67,7 +67,7 @@ public class PacketLogger implements ModInitializer {
 	public void onInitialize() {
 		CONFIG = AutoConfig.register(ModConfig.class, JanksonConfigSerializer::new).getConfig();
         AutoConfig.getConfigHolder(ModConfig.class).registerSaveListener((manager, data) -> {
-            LOGGER.info("PacketLogger ignores: " + CONFIG.ignores.toString());
+            LOGGER.info("PacketLogger initialized");
             unmappersCache.clear();
             if ( data.useMappings ) {
                 initMappings();
@@ -83,6 +83,7 @@ public class PacketLogger implements ModInitializer {
         KeyBindingHelper.registerKeyBinding(TOGGLE_LOGGING);
         KeyBindingHelper.registerKeyBinding(OPEN_CONFIG);
         ClientTickEvents.END_CLIENT_TICK.register(PacketLogger::clientTick);
+        masterSwitch = CONFIG.enableAtStart;
 	}
 
     public static void clientTick(MinecraftClient mc) {

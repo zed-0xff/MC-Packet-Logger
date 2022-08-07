@@ -16,6 +16,7 @@ public class ModConfig implements ConfigData {
     boolean logSent = false;
     boolean logReceived = false;
     boolean logTick = false;
+    boolean enableAtStart = false;
 
     boolean logHex  = false;
     boolean useMappings = false;
