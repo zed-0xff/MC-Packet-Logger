@@ -1,10 +1,6 @@
 package io.github.haykam821.packetlogger;
 
-import java.util.Arrays;
-import java.util.Locale;
-import java.util.List;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.*;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -165,6 +161,13 @@ public class PacketLogger implements ModInitializer {
         return r;
     }
 
+    private static <T> String objectToString(Optional<T> object, int level) {
+        if ( level >= CONFIG.maxRecursion || !object.isPresent() )
+            return String.valueOf(object);
+
+        return "Optional[" + objectToString(object.get(), level+1) + "]";
+    }
+
     private static String objectToString(Enum object, int level) {
          return String.valueOf(object);
     }
@@ -178,6 +181,10 @@ public class PacketLogger implements ModInitializer {
 
         if ( object instanceof Enum ) {
             return objectToString((Enum)object, level);
+        }
+
+        if ( object instanceof Optional ) {
+            return objectToString((Optional)object, level);
         }
 
         if ( object instanceof List ) {
