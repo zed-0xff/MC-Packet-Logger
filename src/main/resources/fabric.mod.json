@@ -1,30 +1,35 @@
 {
-	"schemaVersion": 1,
-	"id": "packetlogger",
-	"version": "${version}",
-	"name": "Packet Logger",
-	"description": "Logs sent and received packets for both the client and server.",
-	"authors": [
-		"haykam821"
-	],
-	"contact": {
-		"homepage": "https://github.com/haykam821/Packet-Logger#readme",
-		"issues": "https://github.com/haykam821/Packet-Logger/issues"
-	},
-	"mixins": [
-		"packetlogger.mixin.json"
-	],
-	"license": "MIT",
-	"icon": "assets/packetlogger/icon.png",
-  "entrypoints": {
-    "modmenu": [
-      "io.github.haykam821.packetlogger.PacketLoggerMenuApiImpl"
+    "schemaVersion": 1,
+    "id": "packetlogger",
+    "version": "${version}",
+    "name": "Packet Logger",
+    "description": "Logs sent and received packets for both the client and server.",
+    "environment": "client",
+    "authors": [
+        "haykam821",
+        "zed-0xff"
     ],
-    "main": [
-      "io.github.haykam821.packetlogger.PacketLogger"
-    ]
-  },
-	"depends": {
-		"fabricloader": ">=0.4.0"
-	}
+    "contact": {
+        "homepage": "https://github.com/zed-0xff/MC-Packet-Logger#readme",
+        "issues": "https://github.com/zed-0xff/MC-Packet-Logger/issues",
+        "sources": "https://github.com/zed-0xff/MC-Packet-Logger"
+    },
+    "license": "MIT",
+    "icon": "assets/packetlogger/icon.png",
+    "mixins": [
+        "packetlogger.mixin.json"
+    ],
+    "entrypoints": {
+        "modmenu": [
+            "io.github.haykam821.packetlogger.PacketLoggerMenuApiImpl"
+        ],
+        "main": [
+            "io.github.haykam821.packetlogger.PacketLogger"
+        ]
+    },
+    "depends": {
+        "java": "${java_version}",
+        "minecraft": "${minecraft_version}",
+        "fabricloader": "${fabricloader_version}"
+    }
 }

@@ -33,35 +33,33 @@ import java.nio.file.Paths;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.mappingio.MappingReader;
-import net.fabricmc.mappingio.tree.MappingTree;
 import net.fabricmc.mappingio.tree.MappingTree.ClassMapping;
 import net.fabricmc.mappingio.tree.MappingTree.FieldMapping;
 import net.fabricmc.mappingio.tree.MemoryMappingTree;
 import org.lwjgl.glfw.GLFW;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import com.google.common.collect.ObjectArrays;
 
 public class PacketLogger implements ModInitializer {
-	public static final String MOD_ID = "Packet Logger";
-	private static final Logger LOGGER = LogManager.getLogger(MOD_ID);
+    public static final String NAME = "Packet Logger";
+    public static final String MOD_ID = "packet-logger";
+    private static final Logger LOGGER = LogManager.getLogger(NAME);
     public static ModConfig CONFIG = null;
     private static MemoryMappingTree mappings;
     private static int nsI; // intermediary
     private static int nsN; // named
     private static HashMap<String, UnmapperProxy> unmappersCache = new HashMap<String, UnmapperProxy>();
     private static HashSet<String> skipClasses = new HashSet<String>();
-    public static final KeyBinding OPEN_CONFIG =
-            new KeyBinding("keybinding.open-config", GLFW.GLFW_KEY_F10, "key.category.packet-logger");
-    private static final KeyBinding TOGGLE_LOGGING =
-            new KeyBinding("keybinding.toggle-logging", GLFW.GLFW_KEY_F12, "key.category.packet-logger");
+    public static final KeyBinding OPEN_CONFIG = new KeyBinding("key.packet-logger.open-config", GLFW.GLFW_KEY_F10, "key.packet-logger.category");
+    private static final KeyBinding TOGGLE_LOGGING = new KeyBinding("key.packet-logger.toggle-logging", GLFW.GLFW_KEY_F12, "key.packet-logger.category");
     private static boolean masterSwitch = false;
     private static int tick = 0;
 
     @Override
-	public void onInitialize() {
-		CONFIG = AutoConfig.register(ModConfig.class, JanksonConfigSerializer::new).getConfig();
+    public void onInitialize() {
+        CONFIG = AutoConfig.register(ModConfig.class, JanksonConfigSerializer::new).getConfig();
         AutoConfig.getConfigHolder(ModConfig.class).registerSaveListener((manager, data) -> {
             LOGGER.info("PacketLogger initialized");
             unmappersCache.clear();
@@ -80,7 +78,7 @@ public class PacketLogger implements ModInitializer {
         KeyBindingHelper.registerKeyBinding(OPEN_CONFIG);
         ClientTickEvents.END_CLIENT_TICK.register(PacketLogger::clientTick);
         masterSwitch = CONFIG.enableAtStart;
-	}
+    }
 
     public static void clientTick(MinecraftClient mc) {
         tick++;
@@ -94,21 +92,21 @@ public class PacketLogger implements ModInitializer {
         }
     }
 
-	private static Identifier getChannel(Packet<?> packet) {
-		if (packet instanceof CustomPayloadC2SPacketAccessor) {
-			return ((CustomPayloadC2SPacketAccessor) packet).getChannel();
-		} else if (packet instanceof CustomPayloadS2CPacketAccessor) {
-			return ((CustomPayloadS2CPacketAccessor) packet).getChannel();
-		}
-		return null;
-	}
+    private static Identifier getChannel(Packet<?> packet) {
+        if (packet instanceof CustomPayloadC2SPacketAccessor) {
+            return ((CustomPayloadC2SPacketAccessor) packet).getChannel();
+        } else if (packet instanceof CustomPayloadS2CPacketAccessor) {
+            return ((CustomPayloadS2CPacketAccessor) packet).getChannel();
+        }
+        return null;
+    }
 
-	private static String getSideName(NetworkSide side) {
-		if (side == NetworkSide.CLIENTBOUND) return "C";
-		if (side == NetworkSide.SERVERBOUND) return "S";
+    private static String getSideName(NetworkSide side) {
+        if (side == NetworkSide.CLIENTBOUND) return "C";
+        if (side == NetworkSide.SERVERBOUND) return "S";
 
-		return side.name().toLowerCase(Locale.ROOT);
-	}
+        return side.name().toLowerCase(Locale.ROOT);
+    }
 
     private static String stripPrefixes(String s) {
         for ( String prefix : CONFIG.stripPrefixes ) {
@@ -120,11 +118,11 @@ public class PacketLogger implements ModInitializer {
     }
 
     // from https://github.com/dancerjohn/LibEx/blob/master/libex/src/main/java/org/libex/reflect/ReflectionUtils.java
-    public static Field[] getFieldsUpTo(@Nonnull Class<?> type, @Nullable Class<?> exclusiveParent) {
+    public static Field[] getFieldsUpTo(@NotNull Class<?> type, @Nullable Class<?> exclusiveParent) {
         Field[] result = type.getDeclaredFields();
 
         Class<?> parentClass = type.getSuperclass();
-        if (parentClass != null && (exclusiveParent == null || !parentClass.equals(exclusiveParent))) {
+        if (parentClass != null && !parentClass.equals(exclusiveParent)) {
             Field[] parentClassFields = getFieldsUpTo(parentClass, exclusiveParent);
             result = ObjectArrays.concat(result, parentClassFields, Field.class);
         }
@@ -147,28 +145,28 @@ public class PacketLogger implements ModInitializer {
     }
 
     private static <T> String objectToString(List<T> list, int level) {
-        String r = "[";
+        StringBuilder r = new StringBuilder("[");
         boolean first = true;
         for ( T value : list ) {
             if ( first ) {
                 first = false;
             } else {
-                r += ", ";
+                r.append(", ");
             }
-            r += objectToString(value, level+1);
+            r.append(objectToString(value, level + 1));
         }
-        r += "]";
-        return r;
+        r.append("]");
+        return r.toString();
     }
 
     private static <T> String objectToString(Optional<T> object, int level) {
-        if ( level >= CONFIG.maxRecursion || !object.isPresent() )
+        if ( level >= CONFIG.maxRecursion || object.isEmpty())
             return String.valueOf(object);
 
-        return "Optional[" + objectToString(object.get(), level+1) + "]";
+        return "Optional[" + objectToString(object.get(), level + 1) + "]";
     }
 
-    private static String objectToString(Enum object, int level) {
+    private static String objectToString(Enum<?> object, int level) {
          return String.valueOf(object);
     }
 
@@ -180,15 +178,15 @@ public class PacketLogger implements ModInitializer {
             return String.valueOf(object);
 
         if ( object instanceof Enum ) {
-            return objectToString((Enum)object, level);
+            return objectToString((Enum<?>) object, level);
         }
 
         if ( object instanceof Optional ) {
-            return objectToString((Optional)object, level);
+            return objectToString((Optional<?>) object, level);
         }
 
         if ( object instanceof List ) {
-            return objectToString((List)object, level); // same level
+            return objectToString((List<?>) object, level); // same level
         }
 
         UnmapperProxy um = getUnmapperProxy(object.getClass().getName());
@@ -200,18 +198,18 @@ public class PacketLogger implements ModInitializer {
             return String.format("%s{ <SKIPPED> }", stripPrefixes(className));
         }
 
-        String data = "";
+        StringBuilder data = new StringBuilder();
         boolean first = true;
         try {
             Field[] allFields = getFieldsUpTo(object.getClass(), Object.class);
             for (Field field : allFields) {
                 if ( Modifier.isStatic(field.getModifiers() )) continue;
-                if ( first ) first = false; else data += ", ";
+                if ( first ) first = false; else data.append(", ");
                 field.setAccessible(true);
                 try {
-                    data += guessFieldName(field) + "=" + objectToString(field.get(object), level + 1);
+                    data.append(guessFieldName(field)).append("=").append(objectToString(field.get(object), level + 1));
                 }catch(IllegalAccessException ex) {
-                    data += guessFieldName(field) + "=<exception!>";
+                    data.append(guessFieldName(field)).append("=<exception!>");
                 }
             }
         } catch (java.lang.reflect.InaccessibleObjectException e) {
@@ -227,26 +225,26 @@ public class PacketLogger implements ModInitializer {
         if ( um.isIgnored() )
             return null;
 
-        String data = "";
+        StringBuilder data = new StringBuilder();
         boolean first = true;
 
         Field[] allFields = getFieldsUpTo(packet.getClass(), Object.class);
         for (Field field : allFields) {
             if ( Modifier.isStatic(field.getModifiers() )) continue;
-            if ( first ) first = false; else data += ", ";
+            if ( first ) first = false; else data.append(", ");
             field.setAccessible(true);
             try {
                 if ( CONFIG.maxRecursion > 0 ) {
-                    data += guessFieldName(field) + "=" + objectToString(field.get(packet), 1);
+                    data.append(guessFieldName(field)).append("=").append(objectToString(field.get(packet), 1));
                 } else {
-                    data += guessFieldName(field) + "=" + field.get(packet);
+                    data.append(guessFieldName(field)).append("=").append(field.get(packet));
                 }
             }catch(IllegalAccessException ex) {
-                data += guessFieldName(field) + "=<exception!>";
+                data.append(guessFieldName(field)).append("=<exception!>");
             }
         }
 
-        return String.format("%s{ %s }", stripPrefixes(um.className()), data);
+        return String.format("%s{ %s }", stripPrefixes(um.className()), data.toString());
     }
 
     private static void logPacket(String dir, String data) {
@@ -257,54 +255,54 @@ public class PacketLogger implements ModInitializer {
         }
     }
 
-	public static void logSentPacket(Packet<?> packet, NetworkSide side) {
+    public static void logSentPacket(Packet<?> packet, NetworkSide side) {
         if ( CONFIG == null || !masterSwitch || !CONFIG.logSent ) return;
 
         String data = packetToString(packet);
         if ( data == null ) return;
 
-		String sideName = PacketLogger.getSideName(side);
-		Identifier channel = PacketLogger.getChannel(packet);
-		if (channel != null) {
-			LOGGER.info("Sending packet with channel '{}' ({}) / data {}", channel, sideName, data);
-			return;
-		}
+        String sideName = PacketLogger.getSideName(side);
+        Identifier channel = PacketLogger.getChannel(packet);
+        if (channel != null) {
+            LOGGER.info("Sending packet with channel '{}' ({}) / data {}", channel, sideName, data);
+            return;
+        }
 
         logPacket("SEND", data);
-	}
+    }
 
-	public static void logReceivedPacket(Packet<?> packet, NetworkSide side) {
+    public static void logReceivedPacket(Packet<?> packet, NetworkSide side) {
         if ( CONFIG == null || !masterSwitch || !CONFIG.logReceived ) return;
 
         String data = packetToString(packet);
         if ( data == null ) return;
 
-		String sideName = PacketLogger.getSideName(side);
-		Identifier channel = PacketLogger.getChannel(packet);
-		if (channel != null) {
-			LOGGER.info("Received packet with channel '{}' ({}) / data {}", channel, sideName, data);
-			return;
-		}
+        String sideName = PacketLogger.getSideName(side);
+        Identifier channel = PacketLogger.getChannel(packet);
+        if (channel != null) {
+            LOGGER.info("Received packet with channel '{}' ({}) / data {}", channel, sideName, data);
+            return;
+        }
 
         logPacket("RECV", data);
-	}
+    }
 
-	public static void logReceivedPacket(ByteBuf buffer) {
+    public static void logReceivedPacket(ByteBuf buffer) {
         if ( CONFIG == null || !masterSwitch || !CONFIG.logReceived || !CONFIG.logHex ) return;
-		StringBuilder data = new StringBuilder();
-		buffer.markReaderIndex();
-		char[] hex = "0123456789ABCDEF".toCharArray();
-		
-		while(buffer.readableBytes() > 0) {
-			byte d = buffer.readByte();
-			data.append(hex[(d >> 4) & 0x0F]);
-			data.append(hex[(d) & 0x0F]);
-			data.append(" ");
-		}
-		buffer.resetReaderIndex();
-		
-		LOGGER.info("Received packet HEX: {}", data.toString());
-	}
+        StringBuilder data = new StringBuilder();
+        buffer.markReaderIndex();
+        char[] hex = "0123456789ABCDEF".toCharArray();
+        
+        while(buffer.readableBytes() > 0) {
+            byte d = buffer.readByte();
+            data.append(hex[(d >> 4) & 0x0F]);
+            data.append(hex[(d) & 0x0F]);
+            data.append(" ");
+        }
+        buffer.resetReaderIndex();
+        
+        LOGGER.info("Received packet HEX: {}", data.toString());
+    }
 
     private static void initMappings() {
         String path = CONFIG.mapPath.replaceFirst("^~", System.getProperty("user.home"));

@@ -9,10 +9,8 @@ import net.fabricmc.api.Environment;
 
 @Environment(EnvType.CLIENT)
 public class PacketLoggerMenuApiImpl implements ModMenuApi {
-
     @Override
     public ConfigScreenFactory<?> getModConfigScreenFactory() {
         return screen -> AutoConfig.getConfigScreen(ModConfig.class, screen).get();
     }
-
 }
