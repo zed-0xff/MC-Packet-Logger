@@ -8,6 +8,6 @@ import net.minecraft.util.Identifier;
 
 @Mixin(CustomPayloadC2SPacket.class)
 public interface CustomPayloadC2SPacketAccessor {
-	@Accessor("channel")
-	public Identifier getChannel();
+    @Accessor("channel")
+    public Identifier getChannel();
 }

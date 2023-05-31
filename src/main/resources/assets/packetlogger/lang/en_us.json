@@ -1,0 +1,18 @@
+{
+    "key.packet-logger.category": "Packet Logger",
+    "key.packet-logger.open-config": "Open Config",
+    "key.packet-logger.toggle-logging": "Toggle Logging",
+
+    "text.autoconfig.packet-logger.title": "Packet Logger",
+    "text.autoconfig.packet-logger.option.logSent": "Log Sent Packets",
+    "text.autoconfig.packet-logger.option.logReceived": "Log Received Packets",
+    "text.autoconfig.packet-logger.option.logTick": "Show Tick Counter",
+    "text.autoconfig.packet-logger.option.enableAtStart": "Enable at Start",
+    "text.autoconfig.packet-logger.option.logHex": "Log Received Packet Hex",
+    "text.autoconfig.packet-logger.option.useMappings": "Use Mappings",
+    "text.autoconfig.packet-logger.option.mapPath": "Mappings Path",
+    "text.autoconfig.packet-logger.option.maxRecursion": "Max Recursion",
+    "text.autoconfig.packet-logger.option.stripPrefixes": "Prefixes to strip",
+    "text.autoconfig.packet-logger.option.ignores": "Ignored Packets",
+    "text.autoconfig.packet-logger.option.skipClasses": "Skipped Classes"
+}

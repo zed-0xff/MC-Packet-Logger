@@ -8,6 +8,6 @@ import net.minecraft.network.NetworkSide;
 
 @Mixin(ClientConnection.class)
 public interface ClientConnectionAccessor {
-	@Accessor("side")
-	public NetworkSide getSide();
+    @Accessor("side")
+    public NetworkSide getSide();
 }
